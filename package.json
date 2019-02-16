@@ -1,0 +1,38 @@
+{
+	"name": "test21",
+	"version": "0.0.0",
+	"private": true,
+	"scripts": {
+		"start": "concurrently \"npm run build && node dist\\app.js\" \"npm run mongo\"",
+		"build": "npm run clean && babel src -s -D -d dist --copy-files",
+		"clean": "del /q dist\\*",
+		"dev": "nodemon src\\app.js --exec babel-node --presets babel-preset-env",
+		"mongo": "mongod --dbpath=db"
+	},
+	"dependencies": {
+		"bcrypt": "^3.0.0",
+		"express": "~4.16.0",
+		"mongodb": "^3.1.1",
+		"morgan": "~1.9.0",
+		"ws": "^6.0.0"
+	},
+	"devDependencies": {
+		"babel-preset-env": "^1.7.0",
+		"nodemon": "^1.18.3"
+	},
+	"babel": {
+		"presets": [
+			[
+				"env"
+			]
+		],
+		"ignore": [
+			"**\\terminal.js"
+		]
+	},
+	"eslintConfig": {
+		"globals": {
+			"Terminal": true
+		}
+	}
+}
