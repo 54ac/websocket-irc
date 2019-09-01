@@ -30,17 +30,21 @@ app.get("/", (req, res, next) => {
 const mongoURL = "mongodb://localhost:27017/chat";
 var dbo;
 
-MongoClient.connect(mongoURL, { useNewUrlParser: true }, function(err, db) {
-	if (err) throw err;
-	dbo = db.db("chat");
-	dbo.createCollection("messages", function(err, res) {
+MongoClient.connect(
+	mongoURL,
+	{ useNewUrlParser: true, useUnifiedTopology: true },
+	function(err, db) {
 		if (err) throw err;
-	});
-	dbo.createCollection("lifeforms", function(err, res) {
-		if (err) throw err;
-	});
-	console.log("mongo working");
-});
+		dbo = db.db("chat");
+		dbo.createCollection("messages", function(err, res) {
+			if (err) throw err;
+		});
+		dbo.createCollection("lifeforms", function(err, res) {
+			if (err) throw err;
+		});
+		console.log("mongo working");
+	}
+);
 
 const defaultChannel = "general";
 
@@ -246,6 +250,11 @@ wss.on("connection", ws => {
 			message === "/list"
 		) {
 			ws.send("list: " + channels[ws.channel].join(" "));
+		} else if (
+			loggedIn.includes(ws.userName.toLowerCase()) &&
+			message === "/users"
+		) {
+			ws.send("users: " + channels[ws.channel].join(" "));
 		} else if (
 			loggedIn.includes(ws.userName.toLowerCase()) &&
 			splitMessage[0] === "/w"

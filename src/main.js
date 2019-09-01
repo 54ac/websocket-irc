@@ -68,10 +68,11 @@ function welcome(channelName) {
 	chat.print("welcome to the websocket irc mimic");
 	chat.print("---");
 	chat.print("commands:");
-	chat.print("/name to change name (e.g. /name rowrawer)");
-	chat.print("/passwd to change password (e.g. /passwd hunter2)");
+	chat.print("/name to change your name (e.g. /name rowrawer)");
+	chat.print("/passwd to change your password (e.g. /passwd hunter2)");
 	chat.print("/join or /j to join a different channel (e.g. /j general)");
 	chat.print("/w to whisper to someone (e.g. /w rowrawer)");
+	chat.print("/users to list the users present in the current channel");
 	chat.print(
 		"/default to automatically join the current channel after logging in"
 	);
@@ -167,6 +168,16 @@ function loggedIn() {
 					userlist.print(element);
 				});
 			if (!document.hasFocus()) document.title = "[!] the websocket irc mimic";
+		} else if (event.data.startsWith("users: ")) {
+			chat.print("---");
+			chat.print("// users present:");
+			event.data
+				.substr(7)
+				.split(" ")
+				.forEach(element => {
+					chat.print(element);
+				});
+			chat.print("---");
 		}
 	};
 
