@@ -1,5 +1,3 @@
-"use strict";
-
 const webSocket = window.WebSocket || window.MozWebSocket;
 const chat = new Terminal();
 const userlist = new Terminal();
@@ -67,13 +65,13 @@ function login(no) {
 }
 
 function welcome(channelName) {
-	chat.print("welcome to 😩");
+	chat.print("welcome to the websocket irc mimic");
 	chat.print("---");
 	chat.print("commands:");
-	chat.print("/name to change name (e.g. /name rawrower)");
+	chat.print("/name to change name (e.g. /name rowrawer)");
 	chat.print("/passwd to change password (e.g. /passwd hunter2)");
 	chat.print("/join or /j to join a different channel (e.g. /j general)");
-	chat.print("/w to whisper to someone (e.g. /w rawrower)");
+	chat.print("/w to whisper to someone (e.g. /w rowrawer)");
 	chat.print(
 		"/default to automatically join the current channel after logging in"
 	);
@@ -133,7 +131,7 @@ function loggedIn() {
 				.getElementsByTagName("div")[0]
 				.getElementsByTagName("p")[0]
 				.appendChild(newMsg);
-			if (!document.hasFocus()) document.title = "[!] 😩";
+			if (!document.hasFocus()) document.title = "[!] the websocket irc mimic";
 		} else if (event.data.startsWith("channel: ")) {
 			joining(event.data.substr(9));
 		} else if (event.data === "same channel") {
@@ -168,7 +166,7 @@ function loggedIn() {
 				.forEach(element => {
 					userlist.print(element);
 				});
-			if (!document.hasFocus()) document.title = "[!] 😩";
+			if (!document.hasFocus()) document.title = "[!] the websocket irc mimic";
 		}
 	};
 
@@ -226,6 +224,6 @@ window.onload = () => {
 	};
 
 	document.addEventListener("focusin", () => {
-		document.title = "😩";
+		document.title = "the websocket irc mimic";
 	});
 };

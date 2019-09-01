@@ -4,7 +4,7 @@ const express = require("express");
 const logger = require("morgan");
 const MongoClient = require("mongodb").MongoClient;
 //const assert = require("assert");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 const app = express();
 app.use(logger("dev"));
@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.static(__dirname));
 app.set("view options", { layout: false });
 
-const port = process.env.PORT || "80";
+const port = process.env.PORT || "5421";
 app.set("port", port);
 
 const server = http.createServer(app);
@@ -30,21 +30,17 @@ app.get("/", (req, res, next) => {
 const mongoURL = "mongodb://localhost:27017/chat";
 var dbo;
 
-MongoClient.connect(
-	mongoURL,
-	{ useNewUrlParser: true },
-	function(err, db) {
+MongoClient.connect(mongoURL, { useNewUrlParser: true }, function(err, db) {
+	if (err) throw err;
+	dbo = db.db("chat");
+	dbo.createCollection("messages", function(err, res) {
 		if (err) throw err;
-		dbo = db.db("chat");
-		dbo.createCollection("messages", function(err, res) {
-			if (err) throw err;
-		});
-		dbo.createCollection("lifeforms", function(err, res) {
-			if (err) throw err;
-		});
-		console.log("mongo working");
-	}
-);
+	});
+	dbo.createCollection("lifeforms", function(err, res) {
+		if (err) throw err;
+	});
+	console.log("mongo working");
+});
 
 const defaultChannel = "general";
 
