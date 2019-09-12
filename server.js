@@ -1,31 +1,11 @@
-const http = require("http");
 const ws = require("ws");
-const express = require("express");
-const logger = require("morgan");
 const MongoClient = require("mongodb").MongoClient;
-//const assert = require("assert");
 const bcrypt = require("bcryptjs");
 
-const app = express();
-app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(express.static(__dirname));
-app.set("view options", { layout: false });
+const port = process.env.PORT || 4521;
 
-const port = process.env.PORT || "5421";
-app.set("port", port);
-
-const server = http.createServer(app);
-const wss = new ws.Server({ server });
-
-server.listen(port);
-server.on("error", onError);
-server.on("listening", onListening);
-
-app.get("/", (req, res, next) => {
-	res.render("index");
-});
+const wss = new ws.Server({ port });
+if (wss) console.log(`listening on port ${port}`);
 
 const mongoURL = "mongodb://localhost:27017/chat";
 var dbo;
@@ -259,21 +239,25 @@ wss.on("connection", ws => {
 			loggedIn.includes(ws.userName.toLowerCase()) &&
 			splitMessage[0] === "/w"
 		) {
-			ws.timeStamp = new Date();
-			wss.clients.forEach(client => {
-				if (client.userName === splitMessage[1]) {
-					client.send(
-						`[${ws.timeStamp.getTime()}] [w] ${ws.userName}: ${message.substr(
-							splitMessage[0].length + splitMessage[1].length + 2
-						)}`
-					);
-					ws.send(
-						`[${ws.timeStamp.getTime()}] [w] ${ws.userName}: ${message.substr(
-							splitMessage[0].length + splitMessage[1].length + 2
-						)}`
-					);
-				}
-			});
+			if (splitMessage[1] !== ws.userName.toLowerCase()) {
+				ws.timeStamp = new Date();
+				wss.clients.forEach(client => {
+					if (client.userName === splitMessage[1]) {
+						client.send(
+							`[${ws.timeStamp.getTime()}] [w] ${ws.userName}: ${message.substr(
+								splitMessage[0].length + splitMessage[1].length + 2
+							)}`
+						);
+						ws.send(
+							`[${ws.timeStamp.getTime()}] [w] ${ws.userName}: ${message.substr(
+								splitMessage[0].length + splitMessage[1].length + 2
+							)}`
+						);
+					}
+				});
+			} else {
+				ws.send("same whisper");
+			}
 		} else if (
 			loggedIn.includes(ws.userName.toLowerCase()) &&
 			splitMessage[0] === "/msg"
@@ -317,29 +301,3 @@ wss.on("connection", ws => {
 		}
 	});
 });
-
-function onError(error) {
-	if (error.syscall !== "listen") {
-		console.error(error);
-	}
-
-	const bind = typeof port === "string" ? "Pipe " + port : "Port " + port;
-
-	// handle specific listen errors with friendly messages
-	switch (error.code) {
-		case "EACCES":
-			console.error(bind + " requires elevated privileges");
-			process.exit(1);
-			break;
-		case "EADDRINUSE":
-			console.error(bind + " is already in use");
-			process.exit(1);
-			break;
-		default:
-			console.error(error);
-	}
-}
-
-function onListening() {
-	console.log(`http server up on ${server.address().port}`);
-}

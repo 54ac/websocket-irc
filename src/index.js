@@ -1,9 +1,14 @@
+import Terminal from "./terminal";
+import "./main.css";
 const webSocket = window.WebSocket || window.MozWebSocket;
 const chat = new Terminal();
 const userlist = new Terminal();
 var username;
 var currentChannel;
-var chatSocket = new webSocket(`ws://${location.host}`);
+var chatSocket;
+location.hostname === "localhost"
+	? (chatSocket = new webSocket(`ws://localhost:4521`)) //dev
+	: (chatSocket = new webSocket(`ws://${location.host}`)); //prod
 
 chat.setBackgroundColor("white");
 chat.setTextColor("black");
@@ -158,6 +163,10 @@ function loggedIn() {
 		} else if (event.data === "default channel set") {
 			chat.print("---");
 			chat.print("// changed default channel to #" + currentChannel);
+			chat.print("---");
+		} else if (event.data === "same whisper") {
+			chat.print("---");
+			chat.print("// no need to whisper to yourself");
 			chat.print("---");
 		} else if (event.data.startsWith("list: ")) {
 			userlist.clear();
