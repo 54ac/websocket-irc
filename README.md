@@ -11,13 +11,12 @@ This is a project I did some time ago which aims to emulate an [IRC](https://en.
 	* Uses [terminal.js](https://github.com/eosterberg/terminaljs) coupled with JS-based DOM manipulation to present an extremely nostalgic and aesthetically pleasing UI,
 	* Uses the WebSocket API for live communication with the server (and therefore other people).
 - Backend (server):
-	* Uses Express to provide a simple server,
 	* Uses WebSockets to communicate with the client,
 	* Uses a MongoDB database to store accounts and messages,
 	* Uses bcryptjs for password handling.
 
 ### What's the point?
-Familiarizing myself with the WebSocket API. Also, it's really cool to be able to create something that resembles IRC (if only slightly) in so few lines of code.
+Familiarizing myself with the WebSocket API and Webpack. Also, it's really cool to be able to create something that resembles IRC (if only slightly) in so few lines of code.
 
 ### How do I use this?
 1. Provide username and password,
@@ -30,4 +29,3 @@ There will soon be a demo link here.
 1. `git clone https://github.com/rowrawer/websocket-irc.git .`
 2. `npm i`
 3. `npm start`
-4. [http://localhost:5421](http://localhost:5421)
