@@ -26,6 +26,15 @@ MongoClient.connect(
 	}
 );
 
+const deleteInterval = 21600000;
+function cleanup() {
+	dbo.collection("messages").drop();
+	dbo.createCollection("messages", function(err, res) {
+		if (err) throw err;
+	});
+}
+setInterval(cleanup, deleteInterval);
+
 const defaultChannel = "general";
 
 var channels = { [defaultChannel]: [] }; //list of people in a given channel

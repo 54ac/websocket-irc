@@ -1,5 +1,12 @@
 {
-	"name": "test21",
+	"name": "websocket-irc",
+	"description": "An IRC-like experience in the browser by using WebSockets.",
+	"author": {
+		"name": "rowrawer",
+		"email": "rowrawer@gmail.com",
+		"url": "https://github.com/rowrawer"
+	},
+	"repository": "github:rowrawer/websocket-irc",
 	"version": "0.1.0",
 	"private": true,
 	"scripts": {

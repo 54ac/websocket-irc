@@ -7,8 +7,8 @@ var username;
 var currentChannel;
 var chatSocket;
 location.hostname === "localhost"
-	? (chatSocket = new webSocket(`ws://localhost:4521`)) //dev
-	: (chatSocket = new webSocket(`ws://${location.host}`)); //prod
+	? (chatSocket = new webSocket("ws://localhost:4521")) //dev
+	: (chatSocket = new webSocket(`ws://${location.host}/ws/`)); //prod
 
 chat.setBackgroundColor("white");
 chat.setTextColor("black");
@@ -71,6 +71,9 @@ function login(no) {
 
 function welcome(channelName) {
 	chat.print("welcome to the websocket irc mimic");
+	chat.print("---");
+	chat.print("this is a demo of https://github.com/rowrawer/websocket-irc");
+	chat.print("i am not responsible for anything anyone says on here");
 	chat.print("---");
 	chat.print("commands:");
 	chat.print("/name to change your name (e.g. /name rowrawer)");

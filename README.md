@@ -23,7 +23,7 @@ Familiarizing myself with the WebSocket API and Webpack. Also, it's really cool 
 2. Talk to other people.
 
 ### Where can I use this?
-There will soon be a demo link here.
+**[Check out this demo right here.](http://rowrawer.cf:5421/)**
 
 ### How do I launch this myself?
 1. `git clone https://github.com/rowrawer/websocket-irc.git .`
