@@ -8,7 +8,7 @@ var currentChannel;
 var chatSocket;
 location.hostname === "localhost"
 	? (chatSocket = new webSocket("ws://localhost:4521")) //dev
-	: (chatSocket = new webSocket(`ws://${location.host}/ws/`)); //prod
+	: (chatSocket = new webSocket(`wss://${location.host}/ws/`)); //prod
 
 chat.setBackgroundColor("white");
 chat.setTextColor("black");
