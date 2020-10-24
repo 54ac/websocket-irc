@@ -1,5 +1,5 @@
 const ws = require("ws");
-const MongoClient = require("mongodb").MongoClient;
+const { MongoClient } = require("mongodb");
 const bcrypt = require("bcryptjs");
 
 const port = process.env.PORT || 4521;
@@ -8,7 +8,7 @@ const wss = new ws.Server({ port });
 if (wss) console.log(`listening on port ${port}`);
 
 const mongoURL = "mongodb://localhost:27017/chat";
-var dbo;
+let dbo;
 
 MongoClient.connect(
 	mongoURL,
@@ -16,12 +16,6 @@ MongoClient.connect(
 	function(err, db) {
 		if (err) throw err;
 		dbo = db.db("chat");
-		dbo.createCollection("messages", function(err, res) {
-			if (err) throw err;
-		});
-		dbo.createCollection("lifeforms", function(err, res) {
-			if (err) throw err;
-		});
 		console.log("mongo working");
 	}
 );
@@ -37,12 +31,12 @@ setInterval(cleanup, deleteInterval);
 
 const defaultChannel = "general";
 
-var channels = { [defaultChannel]: [] }; //list of people in a given channel
-var loggedIn = []; //list of people online
+const channels = { [defaultChannel]: [] }; // list of people in a given channel
+const loggedIn = []; // list of people online
 
-wss.on("connection", ws => {
-	ws.on("message", message => {
-		let splitMessage = message.split(" ", 2);
+wss.on("connection", conn => {
+	conn.on("message", message => {
+		const splitMessage = message.split(" ", 2);
 
 		function sendLog(channel) {
 			dbo
@@ -51,135 +45,139 @@ wss.on("connection", ws => {
 				.each((err, msg) => {
 					if (err) throw err;
 					if (msg)
-						ws.send(`[${msg.timeStamp}] ${msg.userName}: ${msg.message}`);
+						// TODO: send object
+						conn.send(`[${msg.timeStamp}] ${msg.userName}: ${msg.message}`);
 				});
 		}
 
 		function postLogIn(channel) {
-			ws.channel = channel;
-			if (channels[channel].includes(ws.userName.toLowerCase())) {
-				//no duplicate logins
-				ws.userName = "";
-				ws.channel = "";
-				ws.passwd = "";
-				ws.send("nah");
+			conn.channel = channel;
+			if (channels[channel].includes(conn.userName.toLowerCase())) {
+				// no duplicate logins
+				conn.userName = "";
+				conn.channel = "";
+				conn.passwd = "";
+				conn.send("nah");
 			} else {
-				if (!channels[ws.channel]) channels[ws.channel] = [];
-				loggedIn.push(ws.userName.toLowerCase());
-				channels[ws.channel].push(ws.userName);
-				ws.send("channel: " + ws.channel);
+				if (!channels[conn.channel]) channels[conn.channel] = [];
+				loggedIn.push(conn.userName.toLowerCase());
+				channels[conn.channel].push(conn.userName);
+				conn.send("channel: " + conn.channel);
 				wss.clients.forEach(client => {
-					if (client !== ws && client.channel === ws.channel) {
+					if (client !== conn && client.channel === conn.channel) {
 						console.log("sent list request");
-						client.send("list: " + channels[ws.channel].join(" "));
+						client.send("list: " + channels[conn.channel].join(" "));
 					}
 				});
-				console.log(ws.userName + " logged in");
+				console.log(conn.userName + " logged in");
 			}
 		}
-		//login segment
+
+		// login segment
 		if (splitMessage[0] === "/name") {
-			//username handling
-			if (loggedIn.includes(ws.userName) && ws.channel) {
+			// username handling
+			if (loggedIn.includes(conn.userName) && conn.channel) {
 				// if this is a name change request then do that
-				let oldName = ws.userName.toLowerCase();
-				ws.userName = splitMessage[1].substr(23);
+				const oldName = conn.userName.toLowerCase();
+				conn.userName = splitMessage[1].substr(0, 23);
 				dbo
 					.collection("lifeforms")
 					.findOne(
-						{ userName: ws.userName.toLowerCase() },
+						{ userName: conn.userName.toLowerCase() },
 						{ _id: 0 },
 						(err, result) => {
 							if (err) throw err;
 							if (!result) {
 								// if there is no other existing account by that name
-								//update the arrays as well
+								// update the arrays as well
 								dbo
 									.collection("lifeforms")
 									.updateOne(
 										{ userName: oldName },
-										{ $set: { userName: ws.userName.toLowerCase() } },
-										(err, res) => {
+										{ $set: { userName: conn.userName.toLowerCase() } },
+										err => {
 											if (err) throw err;
-											channels[ws.channel].splice(
-												channels[ws.channel].indexOf(oldName),
+											channels[conn.channel].splice(
+												channels[conn.channel].indexOf(oldName),
 												1
 											);
-											channels[ws.channel].push(ws.userName.toLowerCase());
+											channels[conn.channel].push(conn.userName.toLowerCase());
 											loggedIn.splice(loggedIn.indexOf(oldName), 1);
-											loggedIn.push(ws.userName.toLowerCase());
-											ws.send("name changed to " + ws.userName);
+											loggedIn.push(conn.userName.toLowerCase());
+											conn.send("name changed to " + conn.userName);
+											conn.send("list: " + channels[conn.channel].join(" "));
 											console.log(
-												oldName + " changed their name to " + ws.userName
+												oldName + " changed their name to " + conn.userName
 											);
 										}
 									);
-							} else ws.send("same name");
+							} else conn.send("same name");
 						}
 					);
 			} else if (!splitMessage[1].match(/[^\S]+/)) {
-				ws.userName = splitMessage[1];
+				[, conn.userName] = splitMessage;
 			}
-		} else if (ws.userName && splitMessage[0] === "/passwd") {
-			//password handling
-			ws.passwd = splitMessage[1];
+		} else if (conn.userName && splitMessage[0] === "/passwd") {
+			// password handling
+			[, conn.passwd] = splitMessage;
 			dbo
 				.collection("lifeforms")
 				.findOne(
-					{ userName: ws.userName.toLowerCase() },
+					{ userName: conn.userName.toLowerCase() },
 					{ _id: 0 },
 					(err, result) => {
 						if (err) throw err;
 						if (result) {
-							//if it's an existing user
+							// if it's an existing user
 							if (
-								loggedIn.includes(result.userName.toLowerCase() && ws.channel)
+								loggedIn.includes(result.userName.toLowerCase()) &&
+								conn.channel
 							) {
-								//if the person's logged in then change their password when they send the command
-								bcrypt.hash(ws.passwd, 8, (err, res) => {
+								// if the person's logged in then change their password when they send the command
+								bcrypt.hash(conn.passwd, 8, (err, res) => {
 									if (err) throw err;
 									if (res) {
 										dbo
 											.collection("lifeforms")
 											.updateOne(
-												{ userName: result.userName },
+												{ userName: result.userName.toLowerCase() },
 												{ $set: { passwd: res } },
-												(err, res) => {
+												err => {
 													if (err) throw err;
 													console.log(
 														result.userName + " changed their password"
 													);
-													ws.send("password changed");
+													conn.send("password changed");
 												}
 											);
 									}
 								});
 							} else {
-								bcrypt.compare(ws.passwd, result.passwd, (err, res) => {
+								bcrypt.compare(conn.passwd, result.passwd, (err, res) => {
 									if (err) throw err;
 									if (res) {
-										//avoid duplicate logins
+										// avoid duplicate logins
 										postLogIn(result.defaultChannel);
 									} else {
-										ws.userName = "";
-										ws.channel = "";
-										ws.passwd = "";
-										ws.send("nah");
+										conn.userName = "";
+										conn.channel = "";
+										conn.passwd = "";
+										conn.send("nah");
 									}
 								});
 							}
 						} else {
-							//if it's a new user then create account
-							bcrypt.hash(ws.passwd, 8, (err, result) => {
+							// if it's a new user then create account
+							bcrypt.hash(conn.passwd, 8, (err, res) => {
 								if (err) throw err;
-								let messageObj = {
-									userName: ws.userName.toLowerCase(),
-									passwd: result,
+								const messageObj = {
+									userName: conn.userName.toLowerCase(),
+									passwd: res,
 									defaultChannel: defaultChannel
 								};
 								dbo
 									.collection("lifeforms")
-									.insertOne(messageObj, function(err, res) {
+									.insertOne(messageObj, function(err) {
 										if (err) throw err;
 										console.log("added " + messageObj.userName);
 									});
@@ -189,94 +187,100 @@ wss.on("connection", ws => {
 					}
 				);
 		} else if (
-			loggedIn.includes(ws.userName.toLowerCase()) &&
+			loggedIn.includes(conn.userName.toLowerCase()) &&
 			(splitMessage[0] === "/join" || splitMessage[0] === "/j")
 		) {
-			if (splitMessage[1].toLowerCase() !== ws.channel) {
-				//only do things if it's a different channel
-				channels[ws.channel].splice(
-					channels[ws.channel].indexOf(ws.userName.toLowerCase()),
+			if (splitMessage[1].toLowerCase() !== conn.channel) {
+				// only do things if it's a different channel
+				channels[conn.channel].splice(
+					channels[conn.channel].indexOf(conn.userName.toLowerCase()),
 					1
 				);
-				ws.channel = splitMessage[1].toLowerCase();
-				console.log(ws.userName + " changed channel to #" + ws.channel);
-				ws.send("channel: " + ws.channel);
-				if (!channels[ws.channel]) channels[ws.channel] = [];
-				channels[ws.channel].push(ws.userName.toLowerCase());
+				conn.channel = splitMessage[1].toLowerCase();
+				console.log(conn.userName + " changed channel to #" + conn.channel);
+				conn.send("channel: " + conn.channel);
+				if (!channels[conn.channel]) channels[conn.channel] = [];
+				channels[conn.channel].push(conn.userName.toLowerCase());
 				wss.clients.forEach(client => {
-					if (client !== ws && client.channel === ws.channel) {
+					if (client !== conn && client.channel === conn.channel) {
 						console.log("sent list request");
-						client.send("list: " + channels[ws.channel].join(" "));
+						client.send("list: " + channels[conn.channel].join(" "));
 					}
 				});
 			} else {
-				ws.send("same channel");
+				conn.send("same channel");
 			}
 		} else if (
-			loggedIn.includes(ws.userName.toLowerCase()) &&
+			loggedIn.includes(conn.userName.toLowerCase()) &&
 			message === "logs???"
 		) {
-			sendLog(ws.channel);
+			sendLog(conn.channel);
 		} else if (
-			loggedIn.includes(ws.userName.toLowerCase()) &&
+			loggedIn.includes(conn.userName.toLowerCase()) &&
 			message === "/default"
 		) {
 			dbo
 				.collection("lifeforms")
 				.updateOne(
-					{ userName: ws.userName.toLowerCase() },
-					{ $set: { defaultChannel: ws.channel } },
+					{ userName: conn.userName.toLowerCase() },
+					{ $set: { defaultChannel: conn.channel } },
 					(err, res) => {
 						if (err) throw err;
 						console.log(
-							ws.userName + " changed their default channel to #" + ws.channel
+							conn.userName +
+								" changed their default channel to #" +
+								conn.channel
 						);
-						ws.send("default channel set");
+						conn.send("default channel set");
 					}
 				);
 		} else if (
-			loggedIn.includes(ws.userName.toLowerCase()) &&
-			message === "/list"
+			loggedIn.includes(conn.userName.toLowerCase()) &&
+			message === "list???"
 		) {
-			ws.send("list: " + channels[ws.channel].join(" "));
+			conn.send("list: " + channels[conn.channel].join(" "));
 		} else if (
-			loggedIn.includes(ws.userName.toLowerCase()) &&
+			loggedIn.includes(conn.userName.toLowerCase()) &&
 			message === "/users"
 		) {
-			ws.send("users: " + channels[ws.channel].join(" "));
+			conn.send("users: " + channels[conn.channel].join(" "));
 		} else if (
-			loggedIn.includes(ws.userName.toLowerCase()) &&
+			loggedIn.includes(conn.userName.toLowerCase()) &&
 			splitMessage[0] === "/w"
 		) {
-			if (splitMessage[1] !== ws.userName.toLowerCase()) {
-				ws.timeStamp = new Date();
+			if (splitMessage[1] !== conn.userName.toLowerCase()) {
+				conn.timeStamp = new Date();
 				wss.clients.forEach(client => {
 					if (client.userName === splitMessage[1]) {
 						client.send(
-							`[${ws.timeStamp.getTime()}] [w] ${ws.userName}: ${message.substr(
+							`[${conn.timeStamp.getTime()}] [w] ${
+								conn.userName
+							}: ${message.substr(
 								splitMessage[0].length + splitMessage[1].length + 2
 							)}`
 						);
-						ws.send(
-							`[${ws.timeStamp.getTime()}] [w] ${ws.userName}: ${message.substr(
+						conn.send(
+							`[${conn.timeStamp.getTime()}] [w] ${
+								conn.userName
+							}: ${message.substr(
 								splitMessage[0].length + splitMessage[1].length + 2
 							)}`
 						);
 					}
 				});
 			} else {
-				ws.send("same whisper");
+				conn.send("same whisper");
 			}
 		} else if (
-			loggedIn.includes(ws.userName.toLowerCase()) &&
+			loggedIn.includes(conn.userName.toLowerCase()) &&
 			splitMessage[0] === "/msg"
 		) {
-			//message handling
-			ws.timeStamp = new Date();
-			let messageObj = {
-				timeStamp: ws.timeStamp.getTime(),
-				channel: ws.channel,
-				userName: ws.userName,
+			// message handling
+			conn.timeStamp = new Date();
+			const messageObj = {
+				timeStamp: conn.timeStamp.getTime(),
+				channel: conn.channel,
+				userName: conn.userName,
 				message: message.substr(splitMessage[0].length + 1)
 			};
 			dbo.collection("messages").insertOne(messageObj, function(err, res) {
@@ -288,9 +292,10 @@ wss.on("connection", ws => {
 				);
 			});
 			wss.clients.forEach(client => {
-				if (client !== ws && client.channel === ws.channel) {
+				if (client.channel === conn.channel) {
+					// TODO: send object
 					client.send(
-						`[${ws.timeStamp.getTime()}] ${ws.userName}: ${message.substr(
+						`[${conn.timeStamp.getTime()}] ${conn.userName}: ${message.substr(
 							splitMessage[0].length + 1
 						)}`
 					);
@@ -298,15 +303,21 @@ wss.on("connection", ws => {
 			});
 		}
 	});
-	ws.on("close", function close() {
-		if (ws.userName) {
-			if (ws.channel)
-				channels[ws.channel].splice(
-					channels[ws.channel].indexOf(ws.userName.toLowerCase()),
+
+	conn.on("close", function close() {
+		if (conn.userName) {
+			if (conn.channel) {
+				channels[conn.channel].splice(
+					channels[conn.channel].indexOf(conn.userName.toLowerCase()),
 					1
 				);
-			loggedIn.splice(loggedIn.indexOf(ws.userName), 1);
-			console.log(ws.userName + " disconnected");
+				wss.clients.forEach(client => {
+					if (client.channel === conn.channel)
+						client.send("list: " + channels[conn.channel].join(" "));
+				});
+				loggedIn.splice(loggedIn.indexOf(conn.userName), 1);
+				console.log(conn.userName + " disconnected");
+			}
 		}
 	});
 });

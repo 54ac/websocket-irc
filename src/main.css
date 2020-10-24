@@ -1,20 +1,59 @@
-@import url('https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap');
+@import url("https://fonts.googleapis.com/css?family=Roboto+Mono&display=swap");
 
-html, body {
-	width: 100%;
-	height: 100%;
+* {
+	box-sizing: border-box;
 	margin: 0;
+	padding: 0;
+}
+
+html,
+body {
+	font-family: "Roboto Mono", monospace;
 }
 
 #content {
-	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	display: grid;
-	grid-column-gap: 16px;
-	grid-template-columns: minmax(256px, 1fr) 256px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	padding: 0 0.25em;
+}
+
+#main {
+	display: flex;
+	overflow: hidden;
+}
+
+#chat {
+	overflow: auto;
+	scrollbar-width: thin;
+	flex: 5;
+}
+
+p {
+	line-height: 1.5em;
+}
+
+#userlist {
+	flex: 1;
+	padding-left: 0.25em;
+	overflow: auto;
+	scrollbar-width: thin;
+}
+
+#userlist p {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+#input {
+	display: flex;
+}
+
+input {
+	font: inherit;
+	border: none;
+	outline: none;
+	flex-grow: 1;
 }
 
 .night {
@@ -23,26 +62,8 @@ html, body {
 	filter: invert(100%);
 }
 
-#userList {
-	float: right;
-}
-
 @media only screen and (orientation: portrait) {
-	#content {
-		display: initial;
-	}
-
-	#userList {
+	#userlist {
 		display: none;
 	}
-}
-
-#userList div {
-	text-overflow: ellipsis;
-}
-
-.Terminal {
-	overflow: auto;
-	position: relative;
-	font-family: 'Roboto Mono', monospace !important;
 }

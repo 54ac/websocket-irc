@@ -1,4 +1,5 @@
 const HtmlWebPackPlugin = require("html-webpack-plugin");
+const { DefinePlugin } = require("webpack");
 const path = require("path");
 
 module.exports = {
@@ -7,6 +8,8 @@ module.exports = {
 	devServer: {
 		contentBase: path.join(__dirname, "dist"),
 		compress: true,
+		host: "192.168.0.25",
+		disableHostCheck: true,
 		port: 5421
 	},
 	module: {
@@ -36,6 +39,9 @@ module.exports = {
 		new HtmlWebPackPlugin({
 			template: "./src/index.html",
 			filename: "./index.html"
+		}),
+		new DefinePlugin({
+			"process.env.dev": JSON.stringify(true)
 		})
 	]
 };
