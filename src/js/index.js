@@ -1,4 +1,5 @@
-import "./main.css";
+import "normalize.css";
+import "../css/index.css";
 
 class Terminal {
 	constructor(selector) {
@@ -6,7 +7,11 @@ class Terminal {
 	}
 
 	print(msg) {
-		if (this.element.lastChild && this.element.lastChild.textContent === msg)
+		if (
+			this.element.lastChild &&
+			this.element.lastChild.textContent === msg &&
+			!msg.startsWith("[")
+		)
 			return;
 		const newMsg = document.createElement("p");
 		newMsg.textContent = msg;
@@ -26,9 +31,10 @@ const input = document.querySelector("input");
 const userNameInput = document.querySelector("label");
 let username;
 let currentChannel;
-const chatSocket = process.env.dev
-	? new WebSocket(`ws://${window.location.hostname}:4521`)
-	: new WebSocket(`wss://${window.location.host}/ws/`);
+const chatSocket =
+	process.env.NODE_ENV === "development"
+		? new WebSocket(`ws://${window.location.hostname}:4521`)
+		: new WebSocket(`wss://${window.location.host}/ws/`);
 
 const login = (err, pass) => {
 	clearInterval();
