@@ -233,7 +233,7 @@ const listen = message => {
 			} else {
 				chat.print("---");
 				chat.print("// users present:");
-				messageObj.list.forEach(e => chat.print(e));
+				messageObj.users.forEach(e => chat.print(e));
 				chat.print("---");
 			}
 			break;
