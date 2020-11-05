@@ -31,31 +31,30 @@ const input = document.querySelector("input");
 const userNameInput = document.querySelector("label");
 let username;
 let currentChannel;
-const chatSocket =
-	process.env.NODE_ENV === "development"
-		? new WebSocket(`ws://${window.location.hostname}:4521`)
-		: new WebSocket(`wss://${window.location.host}/ws/`);
+let chatSocket;
+let refreshInterval;
+
+const sendRequest = (request, message = {}) =>
+	chatSocket.send(JSON.stringify({ request, ...message }));
 
 const login = (err, pass) => {
-	clearInterval();
+	clearInterval(refreshInterval);
 	userlist.clear();
 	input.focus();
 
 	if (!pass) {
 		chat.clear();
 		if (err) chat.print("// no spaces allowed!!!");
+
 		chat.print("name???");
 		input.onkeyup = e => {
 			if (e.key !== "Enter" || input.value.length === 0) return;
-			username = input.value.substr(0, 23);
+			username = input.value.substring(0, 24);
 			if (username.match(/[^\S]+/)) {
 				chat.clear();
 				input.value = "";
 				login(true, false);
-			} else {
-				chatSocket.send("/name " + username);
-				login(false, true);
-			}
+			} else login(false, true);
 		};
 	} else {
 		input.value = "";
@@ -64,22 +63,23 @@ const login = (err, pass) => {
 		chat.print("password???");
 		input.onkeyup = e => {
 			if (e.key !== "Enter" || input.value.length === 0) return;
-			chatSocket.onmessage = event => {
-				if (event.data.startsWith("channel: ")) {
+			chatSocket.onmessage = message => {
+				const messageObj = JSON.parse(message.data);
+				if (!messageObj || messageObj.login === false) {
+					chat.clear();
+					login();
+				} else {
 					// username in front of input
 					userNameInput.textContent = `${username}:\xa0`;
-					const channelName = event.data.substr(9);
+
 					chat.clear();
 					document.querySelector("#input").style.borderTop = "0.125em dashed";
 					document.querySelector("#userlist").style.borderLeft =
 						"0.125em dashed";
-					welcome(channelName);
-				} else {
-					chat.clear();
-					login();
+					welcome(messageObj.channel);
 				}
 			};
-			chatSocket.send("/passwd " + input.value);
+			sendRequest("login", { username, passwd: input.value });
 			input.value = "";
 			input.type = "text";
 		};
@@ -124,100 +124,192 @@ const joining = channelName => {
 	currentChannel = channelName;
 	chat.print("---");
 	if (window.matchMedia("(orientation: portrait)").matches)
-		chatSocket.send("/users");
-	chatSocket.send("logs???");
-	chatSocket.send("list???");
+		sendRequest("users");
+	sendRequest("logs");
+	sendRequest("list");
 };
 
-const listen = event => {
-	if (event.data.startsWith("[")) {
-		// TODO: receive object & interpret
-		const timeStampRegex = /\[(\d+)\]/;
-		const timeStamp = new Date();
-		let timeStampRegexOutput = event.data.match(timeStampRegex)[0]; // this whole segment extracts the timestamp from the server message and parses it
-		timeStampRegexOutput = timeStampRegexOutput.substr(
-			1,
-			timeStampRegexOutput.length - 2
-		);
-		timeStamp.setTime(timeStampRegexOutput);
-		const timeStampNow = new Date();
-		let timeStampOutput;
-		if (timeStamp.getDate() !== timeStampNow.getDate()) {
-			// compares timestamp to now to figure out whether to add day and month
-			timeStampOutput = `(${("0" + (timeStamp.getDate() + 1)).substr(-2)}.${(
-				"0" +
-				(timeStamp.getMonth() + 1)
-			).substr(-2)}) [${("0" + timeStamp.getHours()).substr(-2)}:${(
-				"0" + timeStamp.getMinutes()
-			).substr(-2)}]`;
-		} else {
-			timeStampOutput = `[${("0" + timeStamp.getHours()).substr(-2)}:${(
-				"0" + timeStamp.getMinutes()
-			).substr(-2)}]`;
-		}
-		chat.print(event.data.replace(timeStampRegex, timeStampOutput));
-		if (!document.hasFocus()) document.title = "[!] the websocket irc mimic";
-	} else if (event.data.startsWith("channel: ")) {
-		chat.clear();
-		joining(event.data.substr(9));
-	} else if (event.data === "same channel") {
-		chat.print("---");
-		chat.print("// you are already here");
-		chat.print("---");
-	} else if (event.data.startsWith("name changed to ")) {
-		username = event.data.substr(16);
-		chat.print("---");
-		chat.print("// name changed to " + username);
-		chat.print("---");
-		userNameInput.textContent = `${username}:\xa0`;
-	} else if (event.data === "same name") {
-		chat.print("---");
-		chat.print("// choose a different name");
-		chat.print("---");
-	} else if (event.data === "password changed") {
-		chat.print("---");
-		chat.print("// password changed");
-		chat.print("---");
-	} else if (event.data === "default channel set") {
-		chat.print("---");
-		chat.print("// changed default channel to #" + currentChannel);
-		chat.print("---");
-	} else if (event.data === "same whisper") {
-		chat.print("---");
-		chat.print("// no need to whisper to yourself");
-		chat.print("---");
-	} else if (event.data.startsWith("list: ")) {
-		userlist.clear();
-		event.data
-			.substr(6)
-			.split(" ")
-			.forEach(element => {
-				userlist.print(element);
-			});
-		if (!document.hasFocus()) document.title = "[!] the websocket irc mimic";
-	} else if (event.data.startsWith("users: ")) {
-		chat.print("---");
-		chat.print("// users present:");
-		event.data
-			.substr(7)
-			.split(" ")
-			.forEach(element => {
-				chat.print(element);
-			});
-		chat.print("---");
+const listen = message => {
+	console.log(message.data);
+	const messageObj = JSON.parse(message.data);
+
+	switch (messageObj.response) {
+		case "message":
+			if (messageObj.message === false) {
+				chat.print("---");
+				chat.print("// couldn't send message");
+				chat.print("---");
+			} else {
+				const timestampNow = new Date();
+				const timestampMsg = new Date(messageObj.timestamp);
+				let output = "";
+
+				if (timestampMsg.getDate() !== timestampNow.getDate()) {
+					// compares timestamp to now to figure out whether to add day and month
+					output = `(${("0" + (timestampMsg.getDate() + 1)).slice(-2)}.${(
+						"0" +
+						(timestampMsg.getMonth() + 1)
+					).slice(-2)}) [${("0" + timestampMsg.getHours()).slice(-2)}:${(
+						"0" + timestampMsg.getMinutes()
+					).slice(-2)}]`;
+				} else {
+					output = `[${("0" + timestampMsg.getHours()).slice(-2)}:${(
+						"0" + timestampMsg.getMinutes()
+					).slice(-2)}]`;
+				}
+
+				if (messageObj.to) output += ` [w] `;
+
+				output += ` ${messageObj.username}: ${messageObj.message}`;
+				chat.print(output);
+
+				if (!document.hasFocus())
+					document.title = "[!] the websocket irc mimic";
+			}
+			break;
+		case "channel":
+			if (messageObj.channel === false) {
+				chat.print("---");
+				chat.print("// couldn't join channel");
+				chat.print("---");
+			} else {
+				chat.clear();
+				joining(messageObj.channel);
+			}
+			break;
+		case "nameChange":
+			if (messageObj.username === false) {
+				chat.print("---");
+				chat.print("// choose a different name");
+				chat.print("---");
+			} else {
+				username = messageObj.username;
+				chat.print("---");
+				chat.print("// name changed to " + username);
+				chat.print("---");
+				userNameInput.textContent = `${username}:\xa0`;
+			}
+			break;
+		case "passwdChange":
+			if (messageObj.passwd === false) {
+				chat.print("---");
+				chat.print("// couldn't change password");
+				chat.print("---");
+				break;
+			} else {
+				chat.print("---");
+				chat.print("// password changed");
+				chat.print("---");
+			}
+			break;
+		case "defaultChannel":
+			if (messageObj.defaultChannel === false) {
+				chat.print("---");
+				chat.print("// couldn't change default channel");
+				chat.print("---");
+			} else {
+				chat.print("---");
+				chat.print("// changed default channel to #" + currentChannel);
+				chat.print("---");
+			}
+			break;
+		case "list":
+			if (messageObj.list === false) {
+				chat.print("---");
+				chat.print("// couldn't get user list");
+				chat.print("---");
+			} else {
+				userlist.clear();
+				messageObj.list.forEach(e => userlist.print(e));
+				if (!document.hasFocus())
+					document.title = "[!] the websocket irc mimic";
+			}
+			break;
+		case "users":
+			if (messageObj.users === false) {
+				chat.print("---");
+				chat.print("// couldn't get user list");
+				chat.print("---");
+			} else {
+				chat.print("---");
+				chat.print("// users present:");
+				messageObj.list.forEach(e => chat.print(e));
+				chat.print("---");
+			}
+			break;
+		default:
+			chat.print("---");
+			chat.print("// can't understand server");
+			chat.print("---");
 	}
 };
 
 const sendMsg = () => {
-	if (input.value === "/night") {
-		document.getElementById("content").classList.contains("night")
-			? document.getElementById("content").classList.remove("night")
-			: document.getElementById("content").classList.add("night");
-	} else if (input.value === "/help") help();
-	else if (input.value.startsWith("/")) {
-		chatSocket.send(input.value.substr(0, 139));
-	} else {
-		chatSocket.send("/msg " + input.value.substr(0, 139));
+	if (!input.value.startsWith("/"))
+		sendRequest("message", {
+			message: input.value.substring(0, 140)
+		});
+	else {
+		const command = input.value.substring(1).split(" ");
+		switch (command[0]) {
+			case "name":
+				if (!command[1]) {
+					chat.print("---");
+					chat.print("// incorrect command");
+					chat.print("---");
+				} else
+					sendRequest("nameChange", { username: command[1].substring(0, 24) });
+				break;
+			case "passwd":
+				if (!command[1]) {
+					chat.print("---");
+					chat.print("// incorrect command");
+					chat.print("---");
+				} else sendRequest("passwdChange", { passwd: command[1] });
+				break;
+			case "j":
+			case "join":
+				if (!command[1]) {
+					chat.print("---");
+					chat.print("// incorrect command");
+					chat.print("---");
+				} else sendRequest("join", { channel: command[1] });
+				break;
+			case "logs":
+				sendRequest("logs");
+				break;
+			case "default":
+				sendRequest("defaultChannel");
+				break;
+			case "users":
+				sendRequest("users");
+				break;
+			case "w":
+			case "whisper":
+				if (command.length < 3) {
+					chat.print("---");
+					chat.print("// couldn't send message");
+					chat.print("---");
+				} else
+					sendRequest("whisper", {
+						to: command[1],
+						message: command[2].substring(0, 140)
+					});
+
+				break;
+			case "night":
+				document.body.classList.contains("night")
+					? document.body.classList.remove("night")
+					: document.body.classList.add("night");
+				break;
+			case "help":
+				help();
+				break;
+			default:
+				chat.print("---");
+				chat.print("// incorrect command");
+				chat.print("---");
+		}
 	}
 	input.value = "";
 };
@@ -229,7 +321,7 @@ const disconnected = () => {
 	chat.print("---");
 	username = "";
 	userNameInput.textContent = "";
-	setInterval(() => {
+	refreshInterval = setInterval(() => {
 		document.location = window.location.href;
 	}, 5000);
 };
@@ -238,17 +330,23 @@ window.onload = () => {
 	document.querySelector("#content").style.maxHeight =
 		(document.documentElement.clientHeight || window.innerHeight) + "px";
 
-	chatSocket.onopen = login();
+	chatSocket =
+		process.env.NODE_ENV === "development"
+			? new WebSocket(`ws://${window.location.hostname}:4521`)
+			: new WebSocket(`wss://${window.location.host}/ws/`);
 
-	chatSocket.onclose = () => {
-		chatSocket.close();
-		console.log("closed ws");
-		disconnected();
+	chatSocket.onopen = () => {
+		login();
+
+		chatSocket.onclose = () => {
+			console.error("closed ws");
+			disconnected();
+		};
 	};
-
-	window.onresize = () =>
-		(document.querySelector("#content").style.maxHeight =
-			(document.documentElement.clientHeight || window.innerHeight) + "px");
-
-	document.onfocus = () => (document.title = "the websocket irc mimic");
 };
+
+window.onresize = () =>
+	(document.querySelector("#content").style.maxHeight =
+		(document.documentElement.clientHeight || window.innerHeight) + "px");
+
+document.onfocus = () => (document.title = "the websocket irc mimic");

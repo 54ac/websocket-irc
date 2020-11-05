@@ -9,6 +9,9 @@
 html,
 body {
 	font-family: "Roboto Mono", monospace;
+	background-color: white;
+	color: black;
+	height: 100%;
 }
 
 #content {
@@ -57,8 +60,6 @@ input {
 }
 
 .night {
-	background-color: white;
-	color: black;
 	filter: invert(100%);
 }
 
