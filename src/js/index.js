@@ -13,6 +13,7 @@ class Terminal {
 			!msg.startsWith("[")
 		)
 			return;
+
 		const newMsg = document.createElement("p");
 		newMsg.textContent = msg;
 		this.element.appendChild(newMsg);
@@ -21,6 +22,21 @@ class Terminal {
 
 	clear() {
 		this.element.textContent = "";
+	}
+
+	url() {
+		const newMsg = document.createElement("p");
+		newMsg.textContent = "this is a demo of ";
+
+		const newUrl = document.createElement("a");
+		newUrl.rel = "noreferrer noopener";
+		newUrl.target = "_blank";
+		newUrl.href = "https://github.com/rowrawer/websocket-irc";
+		newUrl.textContent = "https://github.com/rowrawer/websocket-irc";
+
+		newMsg.appendChild(newUrl);
+		this.element.appendChild(newMsg);
+		this.element.scrollTop = this.element.scrollHeight;
 	}
 }
 
@@ -107,7 +123,7 @@ const help = () => {
 const welcome = channelName => {
 	chat.print("welcome to the websocket irc mimic");
 	chat.print("---");
-	chat.print("this is a demo of https://github.com/rowrawer/websocket-irc");
+	chat.url();
 	chat.print("i am not responsible for anything anyone says on here");
 	help();
 

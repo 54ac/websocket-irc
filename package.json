@@ -20,7 +20,7 @@
 		"not ie < 9"
 	],
 	"dependencies": {
-		"bcryptjs": "^2.4.3",
+		"bcrypt": "^5.0.0",
 		"bufferutil": "^4.0.1",
 		"mongodb": "^3.6.2",
 		"normalize.css": "^8.0.1",

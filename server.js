@@ -1,6 +1,6 @@
 const ws = require("ws");
 const { MongoClient } = require("mongodb");
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 
 const port = process.env.PORT || 4521;
 
@@ -22,8 +22,16 @@ MongoClient.connect(
 
 const deleteInterval = 21600000;
 const cleanup = () => {
-	dbo.collection("messages").drop();
-	dbo.collection("lifeforms").drop();
+	if (
+		dbo.listCollections({ name: "messages" }) &&
+		dbo.listCollections({ name: "messages" }).hasNext()
+	)
+		dbo.collection("messages").drop();
+	if (
+		dbo.listCollections({ name: "lifeforms" }) &&
+		dbo.listCollections({ name: "lifeforms" }).hasNext()
+	)
+		dbo.collection("lifeforms").drop();
 };
 setInterval(cleanup, deleteInterval);
 
