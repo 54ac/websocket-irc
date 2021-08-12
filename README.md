@@ -16,7 +16,7 @@ This is a project I did some time ago which aims to emulate an [IRC](https://en.
 	* Uses bcryptjs for password handling.
 
 ### What's the point?
-Familiarizing myself with the WebSocket API and Webpack. Also, it's really cool to be able to create something that resembles IRC (if only slightly) in so few lines of code.
+Familiarizing myself with the WebSocket API and Webpack (now Rollup). Also, it's really cool to be able to create something that resembles IRC (if only slightly) in so few lines of code.
 
 ### How do I use this?
 1. Provide username and password,
