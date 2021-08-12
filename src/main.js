@@ -1,5 +1,5 @@
-import "normalize.css";
-import "../css/index.css";
+import "../node_modules/modern-normalize/modern-normalize.css";
+import "./main.css";
 
 class Terminal {
 	constructor(selector) {
@@ -63,7 +63,7 @@ const login = (err, pass) => {
 		if (err) chat.print("// no spaces allowed!!!");
 
 		chat.print("name???");
-		input.onkeyup = e => {
+		input.onkeyup = (e) => {
 			if (e.key !== "Enter" || input.value.length === 0) return;
 			username = input.value.substring(0, 24);
 			if (username.match(/[^\S]+/)) {
@@ -77,9 +77,9 @@ const login = (err, pass) => {
 		input.type = "password";
 		chat.print("---");
 		chat.print("password???");
-		input.onkeyup = e => {
+		input.onkeyup = (e) => {
 			if (e.key !== "Enter" || input.value.length === 0) return;
-			chatSocket.onmessage = message => {
+			chatSocket.onmessage = (message) => {
 				const messageObj = JSON.parse(message.data);
 				if (!messageObj || messageObj.login === false) {
 					chat.clear();
@@ -120,7 +120,7 @@ const help = () => {
 	chat.print("/help to show these commands again");
 };
 
-const welcome = channelName => {
+const welcome = (channelName) => {
 	chat.print("welcome to the websocket irc mimic");
 	chat.print("---");
 	chat.url();
@@ -128,13 +128,13 @@ const welcome = channelName => {
 	help();
 
 	joining(channelName);
-	chatSocket.onmessage = e => listen(e);
-	input.onkeyup = e => {
+	chatSocket.onmessage = (e) => listen(e);
+	input.onkeyup = (e) => {
 		if (e.key === "Enter" && input.value.length !== 0) sendMsg();
 	};
 };
 
-const joining = channelName => {
+const joining = (channelName) => {
 	chat.print("---");
 	chat.print("// now joining #" + channelName);
 	currentChannel = channelName;
@@ -145,8 +145,7 @@ const joining = channelName => {
 	sendRequest("list");
 };
 
-const listen = message => {
-	console.log(message.data);
+const listen = (message) => {
 	const messageObj = JSON.parse(message.data);
 
 	switch (messageObj.response) {
@@ -189,7 +188,6 @@ const listen = message => {
 				chat.print("// couldn't join channel");
 				chat.print("---");
 			} else {
-				chat.clear();
 				joining(messageObj.channel);
 			}
 			break;
@@ -236,7 +234,7 @@ const listen = message => {
 				chat.print("---");
 			} else {
 				userlist.clear();
-				messageObj.list.forEach(e => userlist.print(e));
+				messageObj.list.forEach((e) => userlist.print(e));
 				if (!document.hasFocus())
 					document.title = "[!] the websocket irc mimic";
 			}
@@ -249,7 +247,7 @@ const listen = message => {
 			} else {
 				chat.print("---");
 				chat.print("// users present:");
-				messageObj.users.forEach(e => chat.print(e));
+				messageObj.users.forEach((e) => chat.print(e));
 				chat.print("---");
 			}
 			break;
@@ -347,7 +345,7 @@ window.onload = () => {
 		(document.documentElement.clientHeight || window.innerHeight) + "px";
 
 	chatSocket =
-		process.env.NODE_ENV === "development"
+		process?.env.NODE_ENV === "development"
 			? new WebSocket(`ws://${window.location.hostname}:4521`)
 			: new WebSocket(`wss://${window.location.host}/ws/`);
 
@@ -365,4 +363,4 @@ window.onresize = () =>
 	(document.querySelector("#content").style.maxHeight =
 		(document.documentElement.clientHeight || window.innerHeight) + "px");
 
-document.onfocus = () => (document.title = "the websocket irc mimic");
+document.onfocus = () => (document.title = "The WebSocket IRC Mimic");

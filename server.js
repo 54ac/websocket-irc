@@ -22,16 +22,8 @@ MongoClient.connect(
 
 const deleteInterval = 21600000;
 const cleanup = () => {
-	if (
-		dbo.listCollections({ name: "messages" }) &&
-		dbo.listCollections({ name: "messages" }).hasNext()
-	)
-		dbo.collection("messages").drop();
-	if (
-		dbo.listCollections({ name: "lifeforms" }) &&
-		dbo.listCollections({ name: "lifeforms" }).hasNext()
-	)
-		dbo.collection("lifeforms").drop();
+	dbo.collection("messages").drop();
+	dbo.collection("lifeforms").drop();
 };
 setInterval(cleanup, deleteInterval);
 
@@ -50,7 +42,7 @@ const postLogIn = (conn, channel) => {
 	loggedIn.push(conn.username);
 	channels[conn.channel].push(conn.username);
 	sendResponse(conn, { response: "channel", channel: conn.channel });
-	wss.clients.forEach(client => {
+	wss.clients.forEach((client) => {
 		if (client !== conn && client.channel === conn.channel) {
 			sendList(client, channels[conn.channel]);
 		}
@@ -76,7 +68,7 @@ const sendMsg = (conn, messageObj) => {
 	if (!messageObj.to) message.channel = conn.channel;
 	else message.to = messageObj.to;
 
-	dbo.collection("messages").insertOne(message, err => {
+	dbo.collection("messages").insertOne(message, (err) => {
 		if (err) throw err;
 		console.log(
 			`${message.username}: ${message.message.substring(
@@ -85,7 +77,7 @@ const sendMsg = (conn, messageObj) => {
 			)} received and inserted into db`
 		);
 	});
-	wss.clients.forEach(client => {
+	wss.clients.forEach((client) => {
 		if (!message.to && client.channel === message.channel)
 			sendResponse(client, message);
 		else if (
@@ -96,8 +88,8 @@ const sendMsg = (conn, messageObj) => {
 	});
 };
 
-wss.on("connection", conn => {
-	conn.on("message", message => {
+wss.on("connection", (conn) => {
+	conn.on("message", (message) => {
 		const messageObj = JSON.parse(message);
 		if (!messageObj) return;
 
@@ -116,7 +108,12 @@ wss.on("connection", conn => {
 									if (err) throw err;
 									if (!res)
 										sendResponse(conn, { response: "login", login: false });
-									else postLogIn(conn, result.defaultChannel);
+									else {
+										conn.username = result.username;
+										conn.passwd = result.passwd;
+										conn.defaultChannel = result.defaultChannel;
+										postLogIn(conn, conn.defaultChannel);
+									}
 								});
 							} else {
 								// register
@@ -130,13 +127,14 @@ wss.on("connection", conn => {
 											.substring(0, 24);
 										conn.passwd = res;
 										conn.defaultChannel = defaultChannel;
+
 										dbo.collection("lifeforms").insertOne(
 											{
 												username: conn.username,
 												passwd: conn.passwd,
 												defaultChannel: conn.defaultChannel
 											},
-											err => {
+											(err) => {
 												if (err) throw err;
 												console.log("added " + conn.username);
 												postLogIn(conn, conn.defaultChannel);
@@ -169,7 +167,7 @@ wss.on("connection", conn => {
 												username: messageObj.username.trim().toLowerCase()
 											}
 										},
-										err => {
+										(err) => {
 											if (err) throw err;
 											channels[conn.channel].splice(
 												channels[conn.channel].indexOf(conn.username),
@@ -222,8 +220,7 @@ wss.on("connection", conn => {
 										.updateOne(
 											{ username: result.username },
 											{ $set: { passwd: res } },
-											err => {
-												if (err) throw err;
+											() => {
 												conn.passwd = res;
 												console.log(
 													result.username + " changed their password"
@@ -260,7 +257,7 @@ wss.on("connection", conn => {
 					if (!channels[conn.channel]) channels[conn.channel] = [];
 					channels[conn.channel].push(conn.username);
 
-					wss.clients.forEach(client => {
+					wss.clients.forEach((client) => {
 						if (client !== conn && client.channel === conn.channel)
 							sendList(client, channels[conn.channel]);
 					});
@@ -275,18 +272,15 @@ wss.on("connection", conn => {
 					dbo
 						.collection("messages")
 						.find({ channel: conn.channel }, { _id: 0, message: { $slice: 3 } })
-						.each((err, msg) => {
-							if (err) throw err;
-							if (msg) {
-								sendResponse(conn, {
-									response: "message",
-									timestamp: msg.timestamp,
-									username: msg.username,
-									message: msg.message,
-									_id: null
-								});
-							}
-						});
+						.forEach((msg) =>
+							sendResponse(conn, {
+								response: "message",
+								timestamp: msg.timestamp,
+								username: msg.username,
+								message: msg.message,
+								_id: null
+							})
+						);
 				}
 				break;
 			case "defaultChannel":
@@ -301,8 +295,7 @@ wss.on("connection", conn => {
 						.updateOne(
 							{ username: conn.username },
 							{ $set: { defaultChannel: conn.channel } },
-							err => {
-								if (err) throw err;
+							() => {
 								console.log(
 									conn.username +
 										" changed their default channel to #" +
@@ -352,7 +345,7 @@ wss.on("connection", conn => {
 			channels[conn.channel].indexOf(conn.username.toLowerCase()),
 			1
 		);
-		wss.clients.forEach(client => {
+		wss.clients.forEach((client) => {
 			if (client.channel === conn.channel)
 				sendList(client, channels[conn.channel]);
 		});
