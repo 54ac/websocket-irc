@@ -23,9 +23,9 @@ Familiarizing myself with the WebSocket API and Webpack (now Rollup). Also, it's
 2. Talk to other people.
 
 ### Where can I use this?
-**[Check out this demo right here.](https://rowrawer.com:5421/)**
+**[Check out this demo right here.](https://54ac.bio:5421/)**
 
 ### How do I launch this myself?
-1. `git clone https://github.com/rowrawer/websocket-irc.git .`
+1. `git clone https://github.com/54ac/websocket-irc.git .`
 2. `npm i`
 3. `npm start`
