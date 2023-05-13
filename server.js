@@ -220,7 +220,8 @@ wss.on("connection", (conn) => {
 										.updateOne(
 											{ username: result.username },
 											{ $set: { passwd: res } },
-											() => {
+											(err) => {
+												if (err) throw err;
 												conn.passwd = res;
 												console.log(
 													result.username + " changed their password"

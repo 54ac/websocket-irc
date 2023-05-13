@@ -31,8 +31,8 @@ class Terminal {
 		const newUrl = document.createElement("a");
 		newUrl.rel = "noreferrer noopener";
 		newUrl.target = "_blank";
-		newUrl.href = "https://github.com/rowrawer/websocket-irc";
-		newUrl.textContent = "https://github.com/rowrawer/websocket-irc";
+		newUrl.href = "https://github.com/54ac/websocket-irc";
+		newUrl.textContent = "https://github.com/54ac/websocket-irc";
 
 		newMsg.appendChild(newUrl);
 		this.element.appendChild(newMsg);
@@ -105,10 +105,10 @@ const login = (err, pass) => {
 const help = () => {
 	chat.print("---");
 	chat.print("commands:");
-	chat.print("/name to change your name (e.g. /name rowrawer)");
+	chat.print("/name to change your name (e.g. /name 54ac)");
 	chat.print("/passwd to change your password (e.g. /passwd hunter2)");
 	chat.print("/join or /j to join a different channel (e.g. /j general)");
-	chat.print("/w to whisper to someone (e.g. /w rowrawer)");
+	chat.print("/w to whisper to someone (e.g. /w 54ac)");
 	chat.print("/users to list the users present in the current channel");
 	chat.print(
 		"/default to automatically join the current channel after logging in"
