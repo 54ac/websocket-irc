@@ -12,8 +12,7 @@ This is a project I did some time ago which aims to emulate an [IRC](https://en.
 ### What are some of the main features?
 
 - Frontend (website):
-  - Uses [terminal.js](https://github.com/eosterberg/terminaljs) coupled with JS-based DOM manipulation to present an extremely nostalgic and aesthetically pleasing UI,
-  - Uses the [IBM VGA 8x16](https://int10h.org/oldschool-pc-fonts/fontlist/font?ibm_vga_8x16) font for further nostalgia,
+  - Uses the [IBM VGA 8x16](https://int10h.org/oldschool-pc-fonts/fontlist/font?ibm_vga_8x16) font for nostalgia purposes,
   - Uses the WebSocket API for live communication with the server (and therefore other people).
 - Backend (server):
   - Uses WebSockets to communicate with the client,
