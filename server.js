@@ -1,5 +1,6 @@
+/* eslint-disable no-console */
 const ws = require("ws");
-const { MongoClient } = require("mongodb");
+const { MongoClient } = require("mongodb-legacy");
 const bcrypt = require("bcrypt");
 
 const port = process.env.PORT || 4521;

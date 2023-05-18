@@ -1,6 +1,4 @@
-import "../node_modules/modern-normalize/modern-normalize.css";
-import "./main.css";
-
+/* eslint-disable no-console */
 class Terminal {
 	constructor(selector) {
 		this.element = document.querySelector(selector);
@@ -56,6 +54,8 @@ const sendRequest = (request, message = {}) =>
 const login = (err, pass) => {
 	clearInterval(refreshInterval);
 	userlist.clear();
+	document.querySelector("#content").style.height = "";
+	document.querySelector("#input").style.borderBottom = "0.125em solid";
 	input.focus();
 
 	if (!pass) {
@@ -89,9 +89,11 @@ const login = (err, pass) => {
 					userNameInput.textContent = `${username}:\xa0`;
 
 					chat.clear();
-					document.querySelector("#input").style.borderTop = "0.125em dashed";
+					document.querySelector("#input").style.borderBottom = "";
+					document.querySelector("#input").style.borderTop = "0.125em solid";
 					document.querySelector("#userlist").style.borderLeft =
-						"0.125em dashed";
+						"0.125em solid";
+					document.querySelector("#content").style.height = "100%";
 					welcome(messageObj.channel);
 				}
 			};
@@ -341,11 +343,8 @@ const disconnected = () => {
 };
 
 window.onload = () => {
-	document.querySelector("#content").style.maxHeight =
-		(document.documentElement.clientHeight || window.innerHeight) + "px";
-
 	chatSocket =
-		process?.env.NODE_ENV === "development"
+		process && process.env.NODE_ENV === "development"
 			? new WebSocket(`ws://${window.location.hostname}:4521`)
 			: new WebSocket(`wss://${window.location.host}/ws/`);
 
