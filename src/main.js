@@ -116,9 +116,6 @@ const help = () => {
 		"/default to automatically join the current channel after logging in"
 	);
 	chat.print("/night to switch between day and night mode");
-	// utterly useless night mode flourish
-	document.querySelector("#chat").lastChild.style.display = "inline-block";
-	document.querySelector("#chat").lastChild.classList.add("night");
 	chat.print("/help to show these commands again");
 };
 

@@ -3,7 +3,7 @@
 	"description": "An IRC-like experience in the browser by using WebSockets.",
 	"author": {
 		"name": "54ac",
-		"email": "me@54ac.bio",
+		"email": "54acbio@gmail.com",
 		"url": "https://github.com/54ac"
 	},
 	"repository": "github:54ac/websocket-irc",
@@ -39,15 +39,15 @@
 		"@parcel/babel-preset-env": "^2.8.3",
 		"concurrently": "^8.0.1",
 		"eslint": "^8.21.0",
-		"eslint-config-prettier": "^8.5.0",
-		"eslint-plugin-prettier": "^4.2.1",
-		"nodemon": "^2.0.6",
+		"eslint-config-prettier": "^9.0.0",
+		"eslint-plugin-prettier": "^5.0.0",
+		"nodemon": "^3.0.1",
 		"parcel": "^2.8.3",
-		"prettier": "^2.8.1",
+		"prettier": "^3.0.1",
 		"process": "^0.11.10",
 		"rimraf": "^5.0.0",
 		"stylelint": "^15.0.0",
-		"stylelint-config-recommended": "^12.0.0",
-		"stylelint-config-standard": "^33.0.0"
+		"stylelint-config-recommended": "^13.0.0",
+		"stylelint-config-standard": "^34.0.0"
 	}
 }
