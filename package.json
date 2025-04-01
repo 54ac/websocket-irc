@@ -3,7 +3,7 @@
 	"description": "An IRC-like experience in the browser by using WebSockets.",
 	"author": {
 		"name": "54ac",
-		"email": "54acbio@gmail.com",
+		"email": "me@54ac.ovh",
 		"url": "https://github.com/54ac"
 	},
 	"repository": "github:54ac/websocket-irc",
